@@ -21,6 +21,7 @@ import prisma from "@/lib/prisma";
 import { CustomUser } from "@/lib/types";
 import { log } from "@/lib/utils";
 import { getIpAddress } from "@/lib/utils/ip";
+import { isAllowedUserEmail } from "@/lib/auth/allowed-users";
 
 const VERCEL_DEPLOYMENT = !!process.env.VERCEL_URL;
 
@@ -297,6 +298,16 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
     callbacks: {
       ...authOptions.callbacks,
       signIn: async ({ user, account, profile }) => {
+        if (!isAllowedUserEmail(user.email)) {
+          await identifyUser(user.email ?? user.id);
+          await trackAnalytics({
+            event: "User Sign In Attempted",
+            email: user.email ?? undefined,
+            userId: user.id,
+          });
+          return false;
+        }
+
         if (!user.email || (await isBlacklistedEmail(user.email))) {
           await identifyUser(user.email ?? user.id);
           await trackAnalytics({
