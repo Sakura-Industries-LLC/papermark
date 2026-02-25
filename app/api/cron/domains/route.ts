@@ -6,6 +6,10 @@ import {
   getDomainResponse,
   verifyDomain,
 } from "@/lib/domains";
+import {
+  getSelfHostedDomainStatus,
+  isSelfHostedDomainProvider,
+} from "@/lib/domains/selfhosted";
 import prisma from "@/lib/prisma";
 import { log } from "@/lib/utils";
 
@@ -62,26 +66,31 @@ export async function POST(req: Request) {
     const results = await Promise.allSettled(
       domains.map(async (domain) => {
         const { slug, verified, createdAt, _count } = domain;
-        const [domainJson, configJson] = await Promise.all([
-          getDomainResponse(slug),
-          getConfigResponse(slug),
-        ]);
-
         let newVerified;
 
-        if (domainJson?.error?.code === "not_found") {
-          newVerified = false;
-        } else if (!domainJson.verified) {
-          const verificationJson = await verifyDomain(slug);
-          if (verificationJson && verificationJson.verified) {
+        if (isSelfHostedDomainProvider()) {
+          const { status } = await getSelfHostedDomainStatus(slug);
+          newVerified = status === "Valid Configuration";
+        } else {
+          const [domainJson, configJson] = await Promise.all([
+            getDomainResponse(slug),
+            getConfigResponse(slug),
+          ]);
+
+          if (domainJson?.error?.code === "not_found") {
+            newVerified = false;
+          } else if (!domainJson.verified) {
+            const verificationJson = await verifyDomain(slug);
+            if (verificationJson && verificationJson.verified) {
+              newVerified = true;
+            } else {
+              newVerified = false;
+            }
+          } else if (!configJson.misconfigured) {
             newVerified = true;
           } else {
             newVerified = false;
           }
-        } else if (!configJson.misconfigured) {
-          newVerified = true;
-        } else {
-          newVerified = false;
         }
 
         const prismaResponse = await prisma.domain.update({

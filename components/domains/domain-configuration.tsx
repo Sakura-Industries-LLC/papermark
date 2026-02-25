@@ -18,7 +18,10 @@ export default function DomainConfiguration({
 }) {
   const { domainJson, configJson } = response;
   const subdomain = getSubdomain(domainJson.name, domainJson.apexName);
-  const [recordType, setRecordType] = useState(!!subdomain ? "CNAME" : "A");
+  const isSelfHosted = configJson?.provider === "selfhosted";
+  const [recordType, setRecordType] = useState(
+    isSelfHosted ? "CNAME" : !!subdomain ? "CNAME" : "A",
+  );
 
   if (status === "Conflicting DNS Records") {
     return (
@@ -81,13 +84,20 @@ export default function DomainConfiguration({
     <div className="pt-2">
       <div className="-ml-1.5 border-b border-gray-200 dark:border-gray-400">
         <TabSelect
-          options={[
-            { id: "A", label: `A Record${!subdomain ? " (recommended)" : ""}` },
-            {
-              id: "CNAME",
-              label: `CNAME Record${subdomain ? " (recommended)" : ""}`,
-            },
-          ]}
+          options={
+            isSelfHosted
+              ? [{ id: "CNAME", label: "CNAME Record (required)" }]
+              : [
+                  {
+                    id: "A",
+                    label: `A Record${!subdomain ? " (recommended)" : ""}`,
+                  },
+                  {
+                    id: "CNAME",
+                    label: `CNAME Record${subdomain ? " (recommended)" : ""}`,
+                  },
+                ]
+          }
           selected={recordType}
           onSelect={setRecordType}
         />
@@ -102,7 +112,10 @@ export default function DomainConfiguration({
         records={[
           {
             type: recordType,
-            name: recordType === "A" ? "@" : (subdomain ?? "www"),
+            name:
+              recordType === "A"
+                ? "@"
+                : subdomain ?? (isSelfHosted ? "@" : "www"),
             value:
               recordType === "A"
                 ? (configJson?.recommendedIPv4?.[0]?.value?.[0] ??

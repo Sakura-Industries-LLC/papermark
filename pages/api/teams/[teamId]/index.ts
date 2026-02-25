@@ -6,6 +6,7 @@ import { DocumentStorageType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 import { removeDomainFromVercelProject } from "@/lib/domains";
+import { isSelfHostedDomainProvider } from "@/lib/domains/selfhosted";
 import { errorhandler } from "@/lib/errorHandler";
 import { deleteFiles } from "@/lib/files/delete-team-files-server";
 import prisma from "@/lib/prisma";
@@ -208,7 +209,9 @@ export default async function handle(
       let domainPromises: void[] = [];
       if (team.domains) {
         domainPromises = team.domains.map((domain) => {
-          removeDomainFromVercelProject(domain.slug);
+          if (!isSelfHostedDomainProvider()) {
+            removeDomainFromVercelProject(domain.slug);
+          }
         });
       }
 
