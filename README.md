@@ -91,6 +91,20 @@ Example:
 ALLOWED_USER_EMAILS=someone@example.net,example.com
 ```
 
+#### Self-hosted custom domains (optional)
+
+If you are self-hosting and want to verify custom domains via DNS, set:
+
+- `CUSTOM_DOMAIN_PROVIDER=selfhosted`
+- `CUSTOM_DOMAIN_CNAME_TARGET` to the hostname your ingress/load balancer resolves to.
+
+Example:
+
+```shell
+CUSTOM_DOMAIN_PROVIDER=selfhosted
+CUSTOM_DOMAIN_CNAME_TARGET=papermark.example.net
+```
+
 ### 4. Initialize the database
 
 ```shell

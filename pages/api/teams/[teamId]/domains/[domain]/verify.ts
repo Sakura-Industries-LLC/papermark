@@ -8,6 +8,10 @@ import {
   getDomainResponse,
   verifyDomain,
 } from "@/lib/domains";
+import {
+  getSelfHostedDomainStatus,
+  isSelfHostedDomainProvider,
+} from "@/lib/domains/selfhosted";
 import prisma from "@/lib/prisma";
 import { DomainVerificationStatusProps } from "@/lib/types";
 
@@ -19,6 +23,28 @@ export default async function handle(
   if (req.method === "GET") {
     const { domain } = req.query as { domain: string };
     let status: DomainVerificationStatusProps = "Valid Configuration";
+
+    if (isSelfHostedDomainProvider()) {
+      const { status: selfHostedStatus, domainJson, configJson } =
+        await getSelfHostedDomainStatus(domain);
+
+      if (selfHostedStatus !== "Unknown Error") {
+        await prisma.domain
+          .update({
+            where: { slug: domain },
+            data: {
+              verified: selfHostedStatus === "Valid Configuration",
+              lastChecked: new Date(),
+            },
+          })
+          .catch(() => {});
+      }
+
+      return res.status(200).json({
+        status: selfHostedStatus,
+        response: { domainJson, configJson },
+      });
+    }
 
     const [domainJson, configJson] = await Promise.all([
       getDomainResponse(domain),

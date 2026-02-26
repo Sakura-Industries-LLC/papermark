@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 
 import { addDomainToVercel, validDomainRegex } from "@/lib/domains";
+import { isSelfHostedDomainProvider } from "@/lib/domains/selfhosted";
 import { errorhandler } from "@/lib/errorHandler";
 import prisma from "@/lib/prisma";
 import { getTeamWithDomain } from "@/lib/team/helper";
@@ -111,7 +112,9 @@ export default async function handle(
           teamId,
         },
       });
-      await addDomainToVercel(sanitizedDomain);
+      if (!isSelfHostedDomainProvider()) {
+        await addDomainToVercel(sanitizedDomain);
+      }
 
       return res.status(201).json(response);
     } catch (error) {
