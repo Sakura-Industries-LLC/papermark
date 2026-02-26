@@ -1,0 +1,19 @@
+
+NODE endpoint
+SQL >
+    %
+    SELECT
+        country,
+        city,
+        browser,
+        os,
+        device
+    FROM
+        pm_click_events__v1
+    WHERE
+        view_id = {{ String(viewId, required=True) }}
+        AND document_id = {{ String(documentId, required=True) }}
+        AND toUnixTimestamp64Milli(timestamp) >= {{ Int64(since, required=True) }}
+    LIMIT 1
+
+TYPE ENDPOINT
