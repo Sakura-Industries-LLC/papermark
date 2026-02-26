@@ -4,6 +4,7 @@ import { authOptions } from "@/pages/api//auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
 import { getApexDomain, removeDomainFromVercel } from "@/lib/domains";
+import { isSelfHostedDomainProvider } from "@/lib/domains/selfhosted";
 import { errorhandler } from "@/lib/errorHandler";
 import prisma from "@/lib/prisma";
 import { getTeamWithDomain } from "@/lib/team/helper";
@@ -55,7 +56,9 @@ export default async function handle(
       });
 
       await Promise.allSettled([
-        removeDomainFromVercel(domain, domainCount),
+        isSelfHostedDomainProvider()
+          ? Promise.resolve()
+          : removeDomainFromVercel(domain, domainCount),
         prisma.domain.delete({
           where: {
             id: domainToBeDeleted?.id,

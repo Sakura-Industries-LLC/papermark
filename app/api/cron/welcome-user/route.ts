@@ -1,4 +1,5 @@
 import { verifyQstashSignature } from "@/lib/cron/verify-qstash";
+import { CronAuthError, verifyCronApiKey } from "@/lib/cron/verify-cron-api";
 import { sendWelcomeEmail } from "@/lib/emails/send-welcome";
 import prisma from "@/lib/prisma";
 import { subscribe } from "@/lib/resend";
@@ -7,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
+    verifyCronApiKey(req);
+
     const rawBody = await req.text();
     await verifyQstashSignature({ req, rawBody });
 
@@ -47,6 +50,10 @@ export async function POST(req: Request) {
       status: 200,
     });
   } catch (error) {
+    if (error instanceof CronAuthError) {
+      return new Response("Unauthorized", { status: error.status });
+    }
+
     console.error(error);
     return new Response(
       "Error sending welcome email and subscribing user to mailing list.",

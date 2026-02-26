@@ -91,6 +91,33 @@ Example:
 ALLOWED_USER_EMAILS=someone@example.net,example.com
 ```
 
+#### Self-hosted custom domains (optional)
+
+If you are self-hosting and want to verify custom domains via DNS, set:
+
+- `CUSTOM_DOMAIN_PROVIDER=selfhosted`
+- `CUSTOM_DOMAIN_CNAME_TARGET` to the hostname your ingress/load balancer resolves to.
+
+Example:
+
+```shell
+CUSTOM_DOMAIN_PROVIDER=selfhosted
+CUSTOM_DOMAIN_CNAME_TARGET=papermark.example.net
+```
+
+#### Cron API key (required for `/api/cron/*`)
+
+Cron endpoints are protected by an API key in addition to QStash signatures. Set:
+
+```shell
+CRON_API=your-strong-random-token
+```
+
+When calling cron routes directly, include one of these headers:
+
+- `Authorization: Bearer $CRON_API`
+- `x-cron-api-key: $CRON_API`
+
 ### 4. Initialize the database
 
 ```shell

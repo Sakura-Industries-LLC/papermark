@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 
 import { getApexDomain, removeDomainFromVercel } from "../domains";
+import { isSelfHostedDomainProvider } from "../domains/selfhosted";
 
 // calculate the domainCount
 export async function getDomainCount(domain: string) {
@@ -35,7 +36,9 @@ export async function deleteDomain(
 
   return await Promise.allSettled([
     // remove the domain from Vercel
-    removeDomainFromVercel(domain, domainCount),
+    isSelfHostedDomainProvider()
+      ? Promise.resolve()
+      : removeDomainFromVercel(domain, domainCount),
     // delete domain
     !skipPrismaDelete &&
       prisma.domain.delete({
