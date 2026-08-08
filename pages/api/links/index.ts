@@ -84,8 +84,9 @@ export default async function handler(
 
       let { domain, slug, ...linkData } = linkDomainData;
 
-      // set domain and slug to null if the domain is papermark.com
-      if (domain && domain === "papermark.com") {
+      // set domain and slug to null if the domain is the default app domain
+      const defaultDomain = process.env.NEXT_PUBLIC_APP_BASE_HOST ?? "papermark.com";
+      if (domain && (domain === defaultDomain || domain === "papermark.com")) {
         domain = null;
         slug = null;
       }
