@@ -25,9 +25,10 @@ export class MultiRegionS3Store extends S3Store {
     // Initialize with EU config as default
     const euConfig = getStorageConfig();
 
-    // Create S3 client config for super() call (omit endpoint if empty/undefined)
+    // Create S3 client config for the default store.
     const superS3Config: any = {
       bucket: euConfig.bucket,
+      endpoint: euConfig.endpoint || undefined,
       region: euConfig.region,
       credentials: {
         accessKeyId: euConfig.accessKeyId,
@@ -43,9 +44,10 @@ export class MultiRegionS3Store extends S3Store {
     // Store configurations
     this.euConfig = euConfig;
 
-    // Create EU S3 client configuration (omit endpoint if empty/undefined)
+    // Create EU S3 client configuration.
     const euS3Config: any = {
       bucket: euConfig.bucket,
+      endpoint: euConfig.endpoint || undefined,
       region: euConfig.region,
       credentials: {
         accessKeyId: euConfig.accessKeyId,
@@ -59,9 +61,10 @@ export class MultiRegionS3Store extends S3Store {
     try {
       this.usConfig = getStorageConfig("us-east-2");
 
-      // Create US S3 client configuration (omit endpoint if empty/undefined)
+      // Create US S3 client configuration.
       const usS3Config: any = {
         bucket: this.usConfig.bucket,
+        endpoint: this.usConfig.endpoint || undefined,
         region: this.usConfig.region,
         credentials: {
           accessKeyId: this.usConfig.accessKeyId,

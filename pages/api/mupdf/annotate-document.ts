@@ -34,11 +34,35 @@ function validateUrl(urlString: string): URL {
     throw new Error("Only HTTPS URLs are allowed");
   }
 
-  // Get allowed distribution hosts from environment
+  const endpointHosts = ["", "_US"].flatMap((suffix) => {
+    const endpoint = process.env[`NEXT_PRIVATE_UPLOAD_ENDPOINT${suffix}`];
+    const bucket = process.env[`NEXT_PRIVATE_UPLOAD_BUCKET${suffix}`];
+    if (!endpoint) {
+      return [];
+    }
+
+    let endpointUrl: URL;
+    try {
+      endpointUrl = new URL(endpoint);
+    } catch {
+      throw new Error("Invalid upload endpoint URL");
+    }
+    if (endpointUrl.protocol !== "https:") {
+      throw new Error("Upload endpoints must use HTTPS");
+    }
+
+    const endpointHost = endpointUrl.hostname.toLowerCase();
+    return bucket ? [endpointHost, `${bucket}.${endpointHost}`] : [endpointHost];
+  });
+
+  // Get allowed distribution and object-storage hosts from environment
   const allowedHosts = [
     process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST,
     process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US,
-  ].filter((host): host is string => !!host);
+    ...endpointHosts,
+  ]
+    .filter((host): host is string => !!host)
+    .map((host) => host.toLowerCase());
 
   if (allowedHosts.length === 0) {
     throw new Error("No distribution hosts configured");
@@ -46,13 +70,11 @@ function validateUrl(urlString: string): URL {
 
   // Validate hostname against allow-list
   const hostname = parsedUrl.hostname.toLowerCase();
-  const isAllowedHost = allowedHosts.some(
-    (allowedHost) => hostname === allowedHost.toLowerCase(),
-  );
+  const isAllowedHost = allowedHosts.includes(hostname);
 
   if (!isAllowedHost) {
     throw new Error(
-      "Host not allowed. Only requests to configured distribution hosts are permitted",
+      "Host not allowed. Only configured storage hosts are permitted",
     );
   }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { receiver } from "@/lib/cron";
+import { CronAuthError, verifyCronApiKey } from "@/lib/cron/verify-cron-api";
 import { log } from "@/lib/utils";
 import { processEmailQueue } from "@/lib/year-in-review/send-emails";
 
@@ -8,6 +9,14 @@ import { processEmailQueue } from "@/lib/year-in-review/send-emails";
 export const maxDuration = 300; // 5 minutes in seconds
 
 export async function POST(req: Request) {
+  try {
+    verifyCronApiKey(req);
+  } catch (error) {
+    const status =
+      error instanceof CronAuthError ? error.status : 401;
+    return new Response("Unauthorized", { status });
+  }
+
   const body = await req.json();
   if (process.env.VERCEL === "1") {
     const isValid = await receiver.verify({

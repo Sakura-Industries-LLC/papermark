@@ -21,6 +21,7 @@ import prisma from "@/lib/prisma";
 import { CustomUser } from "@/lib/types";
 import { log } from "@/lib/utils";
 import { getIpAddress } from "@/lib/utils/ip";
+import { isAllowedUserEmail } from "@/lib/auth/allowed-users";
 
 const VERCEL_DEPLOYMENT = !!process.env.VERCEL_URL;
 
@@ -28,7 +29,7 @@ function getMainDomainUrl(): string {
   if (process.env.NODE_ENV === "development") {
     return process.env.NEXTAUTH_URL || "http://localhost:3000";
   }
-  return process.env.NEXTAUTH_URL || "https://app.papermark.com";
+  return process.env.NEXTAUTH_URL || "https://dataroom.sakuraindustries.net";
 }
 
 // This function can run for a maximum of 180 seconds
@@ -210,7 +211,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        domain: VERCEL_DEPLOYMENT ? ".papermark.com" : undefined,
+        domain: VERCEL_DEPLOYMENT ? ".sakuraindustries.net" : undefined,
         secure: VERCEL_DEPLOYMENT,
       },
     },
@@ -297,6 +298,16 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
     callbacks: {
       ...authOptions.callbacks,
       signIn: async ({ user, account, profile }) => {
+        if (!isAllowedUserEmail(user.email)) {
+          await identifyUser(user.email ?? user.id);
+          await trackAnalytics({
+            event: "User Sign In Attempted",
+            email: user.email ?? undefined,
+            userId: user.id,
+          });
+          return false;
+        }
+
         if (!user.email || (await isBlacklistedEmail(user.email))) {
           await identifyUser(user.email ?? user.id);
           await trackAnalytics({

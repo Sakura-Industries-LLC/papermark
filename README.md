@@ -77,6 +77,47 @@ npm install
 cp .env.example .env
 ```
 
+#### Allowed user access (optional)
+
+To restrict who can sign in, set `ALLOWED_USER_EMAILS` to a comma-separated list.
+
+- `*` allows anyone to sign in
+- `user@company.com` allows a single email
+- `company.com` or `@company.com` allows anyone in that domain
+
+Example:
+
+```shell
+ALLOWED_USER_EMAILS=someone@example.net,example.com
+```
+
+#### Self-hosted custom domains (optional)
+
+If you are self-hosting and want to verify custom domains via DNS, set:
+
+- `CUSTOM_DOMAIN_PROVIDER=selfhosted`
+- `CUSTOM_DOMAIN_CNAME_TARGET` to the hostname your ingress/load balancer resolves to.
+
+Example:
+
+```shell
+CUSTOM_DOMAIN_PROVIDER=selfhosted
+CUSTOM_DOMAIN_CNAME_TARGET=papermark.example.net
+```
+
+#### Cron API key (required for `/api/cron/*`)
+
+Cron endpoints are protected by an API key in addition to QStash signatures. Set:
+
+```shell
+CRON_API=your-strong-random-token
+```
+
+When calling cron routes directly, include one of these headers:
+
+- `Authorization: Bearer $CRON_API`
+- `x-cron-api-key: $CRON_API`
+
 ### 4. Initialize the database
 
 ```shell
@@ -98,19 +139,25 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 To prepare the Tinybird database, follow these steps:
 
 0. We use `pipenv` to manage our Python dependencies. If you don't have it installed, you can install it using the following command:
+
    ```sh
    pkgx pipenv
    ```
+
 1. Download the Tinybird CLI from [here](https://www.tinybird.co/docs/cli.html) and install it on your system.
 2. After authenticating with the Tinybird CLI, navigate to the `lib/tinybird` directory:
+
    ```sh
    cd lib/tinybird
    ```
+
 3. Push the necessary data sources using the following command:
+
    ```sh
    tb push datasources/*
    tb push endpoints/get_*
    ```
+
 4. Don't forget to set the `TINYBIRD_TOKEN` with the appropriate rights in your `.env` file.
 
 #### Updating Tinybird

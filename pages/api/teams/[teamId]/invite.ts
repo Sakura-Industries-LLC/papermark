@@ -4,6 +4,7 @@ import { getLimits } from "@/ee/limits/server";
 import { getServerSession } from "next-auth";
 
 import { hashToken } from "@/lib/api/auth/token";
+import { isAllowedUserEmail } from "@/lib/auth/allowed-users";
 import { sendTeammateInviteEmail } from "@/lib/emails/send-teammate-invite";
 import { errorhandler } from "@/lib/errorHandler";
 import { newId } from "@/lib/id-helper";
@@ -32,6 +33,12 @@ export default async function handle(
 
     if (!email) {
       return res.status(400).json("Email is missing in request body");
+    }
+
+    if (!isAllowedUserEmail(email)) {
+      return res
+        .status(403)
+        .json("This email is not allowed to create an account");
     }
 
     try {

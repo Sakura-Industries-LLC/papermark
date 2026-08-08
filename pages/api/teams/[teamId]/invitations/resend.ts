@@ -4,6 +4,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth";
 
 import { hashToken } from "@/lib/api/auth/token";
+import { isAllowedUserEmail } from "@/lib/auth/allowed-users";
 import { sendTeammateInviteEmail } from "@/lib/emails/send-teammate-invite";
 import { errorhandler } from "@/lib/errorHandler";
 import prisma from "@/lib/prisma";
@@ -28,6 +29,13 @@ export default async function handle(
     const { email } = req.body as { email: string };
 
     try {
+      if (!isAllowedUserEmail(email)) {
+        res
+          .status(403)
+          .json("This email is not allowed to create an account");
+        return;
+      }
+
       // check if currentUser is part of the team with the teamId
       const userTeam = await prisma.userTeam.findUnique({
         where: {

@@ -1,5 +1,4 @@
 import { Receiver } from "@upstash/qstash";
-import { Client } from "@upstash/qstash";
 import Bottleneck from "bottleneck";
 
 // we're using Bottleneck to avoid running into Resend's rate limit of 10 req/s
@@ -14,6 +13,6 @@ export const receiver = new Receiver({
   nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || "",
 });
 
-export const qstash = new Client({
-  token: process.env.QSTASH_TOKEN || "",
-});
+// No-op QStash stub — we don't use QStash in self-hosted deployment.
+const noop = async (..._a: any[]) => ({}) as any;
+export const qstash = { publishJSON: noop, publish: noop } as any;
