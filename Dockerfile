@@ -50,13 +50,19 @@ RUN npx prisma generate
 
 # Next.js requires certain env vars at build time for static page generation.
 # Papermark eagerly initializes SDK clients at module scope during page data
-# collection.  All integration env vars must be set to non-empty dummy values
-# to prevent crashes.  Runtime env vars override these.
-ENV NEXT_PUBLIC_BASE_URL=https://dataroom.sakuraindustries.net \
+# collection. Public values are compiled into browser assets; server-only
+# integration values use non-empty build placeholders and are replaced at runtime.
+ARG PAPERMARK_PUBLIC_BASE_URL=https://dataroom.sakuraindustries.net
+ARG PAPERMARK_PUBLIC_APP_BASE_HOST=dataroom.sakuraindustries.net
+ARG PAPERMARK_PUBLIC_WEBHOOK_BASE_HOST=webhooks.dataroom.sakuraindustries.net
+ARG PAPERMARK_PUBLIC_WEBHOOK_BASE_URL=https://webhooks.dataroom.sakuraindustries.net
+
+ENV NEXT_PUBLIC_BASE_URL=${PAPERMARK_PUBLIC_BASE_URL} \
     NEXTAUTH_URL=https://dataroom.sakuraindustries.net \
     NEXTAUTH_SECRET=build-time-dummy-secret-not-used-at-runtime \
-    NEXT_PUBLIC_APP_BASE_HOST=localhost:3000 \
-    NEXT_PUBLIC_WEBHOOK_BASE_HOST=localhost:3000 \
+    NEXT_PUBLIC_APP_BASE_HOST=${PAPERMARK_PUBLIC_APP_BASE_HOST} \
+    NEXT_PUBLIC_WEBHOOK_BASE_HOST=${PAPERMARK_PUBLIC_WEBHOOK_BASE_HOST} \
+    NEXT_PUBLIC_WEBHOOK_BASE_URL=${PAPERMARK_PUBLIC_WEBHOOK_BASE_URL} \
     NEXT_PUBLIC_MARKETING_URL=https://dataroom.sakuraindustries.net \
     DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy \
     OPENAI_API_KEY=sk-dummy-build-time-key-012345678901234567890123456789 \
@@ -81,7 +87,8 @@ ENV NEXT_PUBLIC_BASE_URL=https://dataroom.sakuraindustries.net \
     NEXT_PRIVATE_UPLOAD_ENDPOINT=https://dummy.r2.cloudflarestorage.com \
     NEXT_PUBLIC_UPLOAD_TRANSPORT=s3 \
     TRIGGER_SECRET_KEY=tr_dummy_trigger_key \
-    NEXT_PRIVATE_UNSUBSCRIBE_JWT_SECRET=dummy-jwt-secret-for-build
+    NEXT_PRIVATE_UNSUBSCRIBE_JWT_SECRET=dummy-jwt-secret-for-build \
+    REVALIDATE_TOKEN=dummy-revalidation-token-for-build
 
 # Build the application.
 RUN \

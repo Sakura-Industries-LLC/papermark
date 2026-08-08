@@ -54,10 +54,25 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          build-args: |
+            PAPERMARK_PUBLIC_BASE_URL=https://dataroom.sakuraindustries.net
+            PAPERMARK_PUBLIC_APP_BASE_HOST=dataroom.sakuraindustries.net
+            PAPERMARK_PUBLIC_WEBHOOK_BASE_HOST=webhooks.dataroom.sakuraindustries.net
+            PAPERMARK_PUBLIC_WEBHOOK_BASE_URL=https://webhooks.dataroom.sakuraindustries.net
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=max
           sbom: true
+
+      - name: Verify compiled public host contract
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          image="${IMAGE_NAME}@${IMAGE_DIGEST}"
+          docker run --rm --entrypoint sh "$image" -c '
+            grep -RqsF "dataroom.sakuraindustries.net" /app/.next &&
+            grep -RqsF "webhooks.dataroom.sakuraindustries.net" /app/.next
+          '
 
       - name: Attest the published image
         uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
